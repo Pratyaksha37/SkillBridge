@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Search, ArrowRight, Star, UserPlus, Handshake, Sparkles, Palette, Code, CookingPot, Languages, Camera, BrainCircuit } from 'lucide-react';
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
@@ -29,17 +32,19 @@ export default function LandingPage() {
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="hero-gradient text-on-primary px-8 py-5 rounded-xl text-lg font-bold flex items-center gap-2 shadow-xl shadow-primary/10"
+                  onClick={() => navigate(localStorage.getItem('token') ? '/exchange' : '/explore')}
+                  className="hero-gradient text-on-primary px-8 py-5 rounded-xl text-lg font-bold flex items-center gap-2 shadow-xl shadow-primary/10 cursor-pointer"
                 >
-                  Find Skills
+                  {localStorage.getItem('token') ? 'Go to Dashboard' : 'Find Skills'}
                   <Search className="w-5 h-5" />
                 </motion.button>
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-surface-container-highest text-primary px-8 py-5 rounded-xl text-lg font-bold hover:bg-surface-variant transition-all"
+                  onClick={() => navigate(localStorage.getItem('token') ? '/profile' : '/login')}
+                  className="bg-surface-container-highest text-primary px-8 py-5 rounded-xl text-lg font-bold hover:bg-surface-variant transition-all cursor-pointer"
                 >
-                  Start Teaching
+                  {localStorage.getItem('token') ? 'My Profile' : 'Start Teaching'}
                 </motion.button>
               </div>
               
@@ -152,7 +157,7 @@ export default function LandingPage() {
           <div className="relative z-10 max-w-xl">
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">Ready to bridge the gap in your skills?</h2>
             <p className="text-inverse-on-surface text-lg mb-10">Join 50,000+ neighbors who are redefining how we share knowledge.</p>
-            <button className="hero-gradient text-on-primary px-10 py-5 rounded-xl font-bold text-lg shadow-2xl">
+            <button onClick={() => navigate('/login')} className="cursor-pointer hero-gradient text-on-primary px-10 py-5 rounded-xl font-bold text-lg shadow-2xl">
               Start for Free Today
             </button>
           </div>

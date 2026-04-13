@@ -1,7 +1,72 @@
 import { motion } from 'motion/react';
-import { MapPin, Clock, Languages, Edit2, Handshake, Star, Share2, Mail, Plus } from 'lucide-react';
+import { MapPin, Clock, Languages, Edit2, Handshake, Star, Share2, Mail, Plus, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+
+        const data = await response.json();
+        setUser(data);
+      } catch (err: any) {
+        setError(err.message);
+        if (err.message.includes('Token') || err.message.includes('authorization')) {
+          localStorage.removeItem('token');
+          navigate('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-bold text-error mb-4">Error loading profile</h2>
+        <p className="text-on-surface-variant mb-8">{error || 'Could not find user data.'}</p>
+        <button
+          onClick={() => navigate('/login')}
+          className="hero-gradient text-white px-8 py-3 rounded-xl font-bold shadow-lg"
+        >
+          Sign In Again
+        </button>
+      </div>
+    );
+  }
+
   return (
     <main className="max-w-7xl mx-auto px-6 py-12 md:py-16">
       <header className="relative mb-12">
@@ -9,9 +74,9 @@ export default function Profile() {
         <div className="flex flex-col md:flex-row items-end gap-6 px-4 md:px-12 relative z-10">
           <div className="w-32 h-32 md:w-48 md:h-48 rounded-[2rem] bg-surface-container-lowest p-2 shadow-xl shadow-on-surface/5">
             <div className="w-full h-full rounded-[1.5rem] overflow-hidden">
-              <img 
-                src="https://picsum.photos/seed/alex/400/400" 
-                alt="Alex Rivera" 
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
+                alt={user.name}
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
@@ -19,13 +84,17 @@ export default function Profile() {
           </div>
           <div className="flex-1 flex flex-col md:flex-row justify-between items-start md:items-center w-full pb-2 md:pb-6">
             <div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-on-surface tracking-tight">Alex Rivera</h1>
-              <p className="text-on-surface-variant font-medium mt-1">Senior Product Designer & Digital Strategist</p>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-on-surface tracking-tight">{user.name}</h1>
+              <p className="text-on-surface-variant font-medium mt-1">{user.bio || 'SkillBridge Member'}</p>
+              <div className="flex items-center gap-2 mt-2 text-sm text-on-surface-variant/70">
+                <Mail className="w-4 h-4" />
+                {user.email}
+              </div>
             </div>
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="mt-6 md:mt-0 px-8 py-3.5 hero-gradient text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20"
+              className="mt-6 md:mt-0 px-8 py-3.5 hero-gradient text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 cursor-pointer"
             >
               <Edit2 className="w-5 h-5" />
               Edit Profile
@@ -63,18 +132,18 @@ export default function Profile() {
 
         {/* Right Column */}
         <div className="lg:col-span-2 flex flex-col gap-8">
-          <SkillSection 
-            title="Skills Offered" 
+          <SkillSection
+            title="Skills Offered"
             icon={<Handshake className="w-6 h-6" />}
-            skills={['User Interface Design', 'Product Strategy', 'Figma Mastery', 'Design Systems', 'User Research']}
+            skills={user.userSkills?.filter((us: any) => us.type === 'OFFER').map((us: any) => us.skill.name) || []}
             color="secondary"
             addLabel="Add Skill"
           />
-          
-          <SkillSection 
-            title="Skills Wanted" 
+
+          <SkillSection
+            title="Skills Wanted"
             icon={<Star className="w-6 h-6" />}
-            skills={['Motion Graphics', 'After Effects', '3D Modeling (Spline)', 'Public Speaking']}
+            skills={user.userSkills?.filter((us: any) => us.type === 'SEEK').map((us: any) => us.skill.name) || []}
             color="tertiary"
             addLabel="Add Want"
           />
@@ -82,13 +151,13 @@ export default function Profile() {
           <section className="bg-surface-container-lowest p-8 rounded-[2rem] ambient-shadow">
             <h2 className="text-xl font-bold text-on-surface mb-6">Recent Activity</h2>
             <div className="space-y-6">
-              <ActivityItem 
+              <ActivityItem
                 icon={<Handshake className="w-6 h-6 text-primary" />}
                 title="Skill Exchange Completed"
                 description="Taught UX Principles to Sarah J. in exchange for Motion Design basics."
                 time="2 Days Ago"
               />
-              <ActivityItem 
+              <ActivityItem
                 icon={<Star className="w-6 h-6 text-tertiary" />}
                 title="New Review Received"
                 description='"Alex is a patient mentor. His knowledge of design systems is unmatched!"'
@@ -112,8 +181,8 @@ function InfoItem({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 function SkillSection({ title, icon, skills, color, addLabel }: { title: string; icon: React.ReactNode; skills: string[]; color: string; addLabel: string }) {
-  const colorClasses = color === 'secondary' 
-    ? 'bg-secondary-container text-on-secondary-container' 
+  const colorClasses = color === 'secondary'
+    ? 'bg-secondary-container text-on-secondary-container'
     : 'bg-tertiary-container text-on-tertiary-container';
   const iconBg = color === 'secondary' ? 'bg-primary-container/20' : 'bg-tertiary-container/20';
   const iconColor = color === 'secondary' ? 'text-primary' : 'text-tertiary';
@@ -126,7 +195,7 @@ function SkillSection({ title, icon, skills, color, addLabel }: { title: string;
           <span className={`p-2 ${iconBg} rounded-lg ${iconColor}`}>{icon}</span>
           <h2 className="text-xl font-bold text-on-surface">{title}</h2>
         </div>
-        <button className={`${iconColor} font-bold text-sm hover:underline`}>Manage</button>
+        <button className={`${iconColor} font-bold text-sm hover:underline cursor-pointer`}>Manage</button>
       </div>
       <div className="flex flex-wrap gap-3">
         {skills.map(skill => (
@@ -134,7 +203,7 @@ function SkillSection({ title, icon, skills, color, addLabel }: { title: string;
             {skill}
           </div>
         ))}
-        <button className={`px-5 py-2.5 bg-surface-container-lowest font-bold rounded-xl text-sm border border-dashed ${borderDashed} flex items-center gap-2`}>
+        <button className={`px-5 py-2.5 bg-surface-container-lowest font-bold rounded-xl text-sm border border-dashed ${borderDashed} flex items-center gap-2 cursor-pointer`}>
           <Plus className="w-4 h-4" /> {addLabel}
         </button>
       </div>
