@@ -5,6 +5,7 @@ import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
 import Explore from './components/Explore';
+import Auth from './components/Auth';
 
 export default function App() {
   return (
@@ -17,8 +18,7 @@ export default function App() {
             <Route path="/exchange" element={<Dashboard />} />
             <Route path="/mentors" element={<Explore />} />
             <Route path="/explore" element={<Explore />} />
-
-            <Route path="/login" element={<Dashboard />} />
+            <Route path="/login" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </div>

@@ -1,34 +1,31 @@
-import type { Request, Response } from 'express';
-import { AuthService } from '../services/AuthService.js';
+import { Request, Response } from 'express';
+import { authService } from '../services/authService';
+import { catchAsync } from '../utils/catchAsync';
+import { AuthRequest } from '../types';
 
-export class AuthController {
-  constructor(private authService: AuthService) {}
+export const register = catchAsync(async (req: Request, res: Response) => {
+  const { user, token } = await authService.register(req.body);
 
-  public register = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const result = await this.authService.register(req.body);
-      res.status(201).json(result);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+  res.status(201).json({
+    status: 'success',
+    token,
+    data: { user },
+  });
+});
 
-  public login = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const result = await this.authService.login(req.body);
-      res.status(200).json(result);
-    } catch (error: any) {
-      res.status(401).json({ message: error.message });
-    }
-  };
+export const login = catchAsync(async (req: Request, res: Response) => {
+  const { user, token } = await authService.login(req.body);
 
-  public getMe = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const userId = (req as any).user.id;
-      const result = await this.authService.getProfile(userId);
-      res.status(200).json(result);
-    } catch (error: any) {
-      res.status(401).json({ message: error.message });
-    }
-  };
-}
+  res.status(200).json({
+    status: 'success',
+    token,
+    data: { user },
+  });
+});
+
+export const getMe = catchAsync(async (req: AuthRequest, res: Response) => {
+  res.status(200).json({
+    status: 'success',
+    data: { user: req.user },
+  });
+});

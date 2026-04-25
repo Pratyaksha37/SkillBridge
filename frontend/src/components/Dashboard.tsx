@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Compass, Terminal, CircleDollarSign, Brush, Star, Handshake, Loader2 } from 'lucide-react';
+import { Search, Plus, Compass, Terminal, CircleDollarSign, Brush, Star, Handshake, Loader2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ConnectModal from './ConnectModal';
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -8,41 +9,87 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
 
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/users/dashboard`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+  const fetchDashboard = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem('token');
-            navigate('/login');
-            return;
-          }
-          throw new Error('Failed to fetch dashboard data');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/users/dashboard`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
+      });
 
-        const result = await response.json();
-        setData(result);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        throw new Error('Failed to fetch dashboard data');
       }
-    };
 
+      const result = await response.json();
+      setData(result.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboard();
   }, [navigate]);
+
+  const handleConnect = async (peer: any) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/connections`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ receiverId: peer.id || peer.receiverId })
+      });
+
+      if (!response.ok) throw new Error('Failed to save connection');
+
+      setSelectedMatch(peer);
+      fetchDashboard(); // Refresh to show in connections list
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleRemoveConnection = async (receiverId: string) => {
+    if (!window.confirm('Are you sure you want to remove this connection?')) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/connections/${receiverId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to remove connection');
+      
+      setData((prev: any) => ({
+        ...prev,
+        connections: prev.connections.filter((c: any) => c.id !== receiverId)
+      }));
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
   if (loading) {
     return (
@@ -67,10 +114,18 @@ export default function Dashboard() {
     );
   }
 
-  const { user, skills, stats } = data;
+  const { user, connections, stats } = data;
 
   return (
     <main className="max-w-7xl mx-auto px-8 py-12">
+      {selectedMatch && (
+        <ConnectModal
+          name={selectedMatch.name}
+          email={selectedMatch.email}
+          id={selectedMatch.id}
+          onClose={() => setSelectedMatch(null)}
+        />
+      )}
       <header className="mb-12">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-2">Welcome back, {user.name.split(' ')[0]}.</h1>
         <p className="text-on-surface-variant text-lg">Your radiant skills are in high demand today.</p>
@@ -79,48 +134,62 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Skills You Teach */}
+          {/* My Connections */}
           <section className="bg-surface-container-low rounded-[2rem] p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-on-surface">Skills You Teach</h2>
-              <button className="text-primary font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-                Add New <Plus className="w-5 h-5" />
+              <h2 className="text-2xl font-bold text-on-surface">My Connections</h2>
+              <button
+                onClick={() => navigate('/explore')}
+                className="text-primary font-semibold flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+              >
+                Discover More <Compass className="w-5 h-5" />
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {skills.teaching.length > 0 ? skills.teaching.map((us: any) => (
-                <SkillCard
-                  key={us.id}
-                  title={us.skill.name}
-                  level={us.level || 'Intermediate'}
-                  students={12} // Mock student count
-                  tags={[us.skill.category]}
-                  icon={us.skill.category === 'Coding' ? <Terminal className="w-6 h-6" /> : <Compass className="w-6 h-6" />}
-                  colorClass={us.skill.category === 'Coding' ? 'bg-tertiary-container/20 text-tertiary' : 'bg-primary-container/20 text-primary'}
-                />
+              {connections && connections.length > 0 ? connections.map((conn: any) => (
+                <div key={conn.id} className="bg-surface-container-lowest p-6 rounded-2xl ambient-shadow border border-white/50 group relative">
+                  <button 
+                    onClick={() => handleRemoveConnection(conn.id)}
+                    className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                    title="Remove Connection"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-4 mb-4">
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${conn.email}`}
+                      className="w-12 h-12 rounded-xl bg-primary/5"
+                      alt={conn.name}
+                    />
+                    <div>
+                      <h3 className="font-bold text-on-surface">{conn.name}</h3>
+                      <p className="text-xs text-primary font-bold">{conn.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {conn.skills.slice(0, 2).map((s: string) => (
+                      <span key={s} className="px-2 py-1 bg-secondary-container/30 text-secondary text-[10px] font-bold rounded-lg uppercase">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setSelectedMatch(conn)}
+                    className="w-full py-2 rounded-lg bg-surface-container-high text-primary font-bold text-xs hover:bg-primary hover:text-white transition-all cursor-pointer"
+                  >
+                    View Details
+                  </button>
+                </div>
               )) : (
-                <p className="text-on-surface-variant italic p-4">You haven't added any skills to teach yet.</p>
-              )}
-            </div>
-          </section>
-
-          {/* Skills You Want to Learn */}
-          <section className="bg-surface-container-low rounded-[2rem] p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-on-surface">Skills You Want to Learn</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {skills.learning.length > 0 ? skills.learning.map((us: any) => (
-                <SkillCard
-                  key={us.id}
-                  title={us.skill.name}
-                  level={us.level || 'Beginner'}
-                  tags={[us.skill.category]}
-                  icon={us.skill.category === 'Finance' ? <CircleDollarSign className="w-6 h-6" /> : <Brush className="w-6 h-6" />}
-                  colorClass={us.skill.category === 'Finance' ? 'bg-secondary-container/20 text-secondary' : 'bg-primary-container/10 text-primary'}
-                />
-              )) : (
-                <p className="text-on-surface-variant italic p-4">You haven't listed any skills you want to learn yet.</p>
+                <div className="col-span-2 py-12 text-center bg-surface-container-lowest/50 rounded-2xl border-2 border-dashed border-outline-variant/20">
+                  <p className="text-on-surface-variant italic mb-4">No connections yet. Start matching with peers!</p>
+                  <button
+                    onClick={() => navigate('/explore')}
+                    className="hero-gradient text-white px-6 py-2 rounded-xl font-bold shadow-lg"
+                  >
+                    Find Peers
+                  </button>
+                </div>
               )}
             </div>
           </section>
@@ -138,25 +207,38 @@ export default function Dashboard() {
           <div className="sticky top-24">
             <h2 className="text-2xl font-bold text-on-surface mb-6">Suggested Matches</h2>
             <div className="space-y-4">
-              <MatchCard
-                name="Elena S."
-                role="Venture Capitalist"
-                matchRate="98% Match"
-                offers={['Angel Investing', 'Pitch Decks']}
-                wants={['UI Design']}
-                imageUrl="https://picsum.photos/seed/elena/150/150"
-              />
-              <MatchCard
-                name="Marcus T."
-                role="Fullstack Engineer"
-                offers={['Advanced Node.js']}
-                wants={['Design Systems']}
-                imageUrl="https://picsum.photos/seed/marcus/150/150"
-                secondary
-              />
-              <button className="w-full py-4 text-on-surface-variant font-semibold text-sm border-2 border-dashed border-outline-variant/30 rounded-xl hover:border-primary/50 hover:text-primary transition-all">
-                View all 42 matches
-              </button>
+              {data.matches && data.matches.length > 0 ? data.matches.map((match: any, index: number) => (
+                <MatchCard
+                  key={match.id}
+                  name={match.name}
+                  role={match.bio || 'SkillBridge Peer'}
+                  matchRate={match.matchRate}
+                  offers={match.offers}
+                  wants={match.wants}
+                  imageUrl={`https://api.dicebear.com/7.x/avataaars/svg?seed=${match.email}`}
+                  secondary={index % 2 !== 0}
+                  onConnect={() => handleConnect(match)}
+                  isConnected={match.isConnected}
+                />
+              )) : (
+                <div className="bg-surface-container-low p-8 rounded-3xl text-center border-2 border-dashed border-outline-variant/30">
+                  <p className="text-on-surface-variant font-medium">No direct matches yet.</p>
+                  <button
+                    onClick={() => navigate('/explore')}
+                    className="text-primary font-bold text-sm mt-2 hover:underline"
+                  >
+                    Browse community
+                  </button>
+                </div>
+              )}
+              {data.matches && data.matches.length > 0 && (
+                <button
+                  onClick={() => navigate('/explore')}
+                  className="w-full py-4 text-on-surface-variant font-semibold text-sm border-2 border-dashed border-outline-variant/30 rounded-xl hover:border-primary/50 hover:text-primary transition-all cursor-pointer"
+                >
+                  Explore More
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -164,6 +246,7 @@ export default function Dashboard() {
     </main>
   );
 }
+
 
 interface SkillCardProps {
   title: string;
@@ -227,9 +310,11 @@ interface MatchCardProps {
   wants: string[];
   imageUrl: string;
   secondary?: boolean;
+  onConnect?: () => void;
+  isConnected?: boolean;
 }
 
-function MatchCard({ name, role, matchRate, offers, wants, imageUrl, secondary = false }: MatchCardProps) {
+function MatchCard({ name, role, matchRate, offers, wants, imageUrl, secondary = false, onConnect, isConnected }: MatchCardProps) {
   return (
     <div className="bg-surface-container-lowest p-6 rounded-[1.5rem] ambient-shadow border border-white relative overflow-hidden group">
       {matchRate && (
@@ -243,32 +328,38 @@ function MatchCard({ name, role, matchRate, offers, wants, imageUrl, secondary =
         <img src={imageUrl} alt={name} className="w-14 h-14 rounded-xl object-cover" referrerPolicy="no-referrer" />
         <div>
           <h4 className="font-bold text-on-surface text-lg">{name}</h4>
-          <p className="text-sm text-on-surface-variant">{role}</p>
+          <p className="text-sm text-on-surface-variant line-clamp-1">{role}</p>
         </div>
       </div>
       <div className="space-y-3 mb-6">
         <div>
           <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Offers to teach</p>
           <div className="flex flex-wrap gap-2">
-            {offers.map(s => (
+            {offers.slice(0, 3).map(s => (
               <span key={s} className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-lg text-xs font-medium">{s}</span>
             ))}
+            {offers.length > 3 && <span className="text-[10px] text-on-surface-variant mt-1">+{offers.length - 3} more</span>}
           </div>
         </div>
         <div>
           <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Wants to learn</p>
           <div className="flex flex-wrap gap-2">
-            {wants.map(s => (
+            {wants.slice(0, 3).map(s => (
               <span key={s} className="px-3 py-1 bg-tertiary-container text-on-tertiary-container rounded-lg text-xs font-medium">{s}</span>
             ))}
+            {wants.length > 3 && <span className="text-[10px] text-on-surface-variant mt-1">+{wants.length - 3} more</span>}
           </div>
         </div>
       </div>
-      <button className={`w-full py-3 rounded-xl font-bold text-sm tracking-wide transition-all ${secondary
-          ? 'bg-surface-container-high text-primary hover:bg-primary hover:text-on-primary'
-          : 'hero-gradient text-on-primary shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95'
-        }`}>
-        Connect with {name.split(' ')[0]}
+      <button
+        onClick={(e) => { e.stopPropagation(); onConnect?.(); }}
+        className={`w-full py-3 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer ${isConnected
+          ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
+          : secondary
+            ? 'bg-surface-container-high text-primary hover:bg-primary hover:text-on-primary'
+            : 'hero-gradient text-on-primary shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95'
+          }`}>
+        {isConnected ? 'Connected' : `Connect with ${name.split(' ')[0]}`}
       </button>
     </div>
   );

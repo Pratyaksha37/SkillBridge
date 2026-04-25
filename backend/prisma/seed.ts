@@ -1,142 +1,79 @@
-import 'dotenv/config';
-import { PrismaClient, Role, SkillType } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
-import bcrypt from 'bcrypt';
+import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
-
-  // 1. Clean up existing data (Optional, be careful)
-  // await prisma.userSkill.deleteMany();
-  // await prisma.skill.deleteMany();
-  // await prisma.user.deleteMany();
-
-  // 2. Create Skills
-  const skillsData = [
-    { name: 'UI/UX Design', category: 'Design' },
-    { name: 'Figma', category: 'Design' },
-    { name: 'React Development', category: 'Coding' },
-    { name: 'Node.js', category: 'Coding' },
-    { name: 'Full-stack Dev', category: 'Coding' },
-    { name: 'Growth Marketing', category: 'Marketing' },
-    { name: 'SEO', category: 'Marketing' },
-    { name: 'Data Science', category: 'Data' },
-    { name: 'Python', category: 'Data' },
-    { name: 'Photography', category: 'Art' },
-    { name: 'Lightroom', category: 'Art' },
-    { name: 'Content Strategy', category: 'Writing' },
-    { name: 'Angel Investing', category: 'Finance' },
-    { name: 'Abstract Oil Painting', category: 'Art' },
-  ];
-
-  for (const s of skillsData) {
-    await prisma.skill.upsert({
-      where: { name: s.name },
-      update: {},
-      create: s,
-    });
-  }
-
-  const allSkills = await prisma.skill.findMany();
-  const getSkillId = (name: string) => allSkills.find(s => s.name === name)?.id;
-
-  // 3. Create Users
   const hashedPassword = await bcrypt.hash('password123', 10);
+
+  // Clear existing data
+  await prisma.userSkill.deleteMany();
+  await prisma.skill.deleteMany();
+  await prisma.user.deleteMany();
+
+  console.log('Seeding data...');
 
   const users = [
     {
-      email: 'sarah@example.com',
       name: 'Sarah Chen',
+      email: 'sarah@example.com',
       password: hashedPassword,
-      bio: 'Specializing in UX research and interactive prototypes.',
-      title: 'Senior Product Designer',
-      role: Role.TEACHER,
-      imageUrl: 'https://picsum.photos/seed/sarah/200/200',
-      skills: [
-        { name: 'UI/UX Design', type: SkillType.OFFER, level: 'Expert' },
-        { name: 'Figma', type: SkillType.OFFER, level: 'Expert' }
-      ]
+      bio: 'UX Designer with 5 years experience. Looking to learn React.',
     },
     {
-      email: 'marcus@example.com',
-      name: 'Marcus Thorne',
+      name: 'Michael Ross',
+      email: 'michael@example.com',
       password: hashedPassword,
-      bio: 'Passion for teaching React and Node.js best practices.',
-      title: 'Full-stack Architect',
-      role: Role.TEACHER,
-      imageUrl: 'https://picsum.photos/seed/marcus2/200/200',
-      skills: [
-        { name: 'Full-stack Dev', type: SkillType.OFFER, level: 'Expert' },
-        { name: 'React Development', type: SkillType.OFFER, level: 'Expert' },
-        { name: 'Node.js', type: SkillType.OFFER, level: 'Advanced' }
-      ]
+      bio: 'Senior Backend Engineer. Passionate about system design and Python.',
     },
     {
-      email: 'elena@example.com',
       name: 'Elena Rodriguez',
+      email: 'elena@example.com',
       password: hashedPassword,
-      bio: 'Helping startups grow through SEO and content.',
-      title: 'Digital Marketing Strategist',
-      role: Role.TEACHER,
-      imageUrl: 'https://picsum.photos/seed/elena2/200/200',
-      skills: [
-        { name: 'Growth Marketing', type: SkillType.OFFER, level: 'Expert' },
-        { name: 'SEO', type: SkillType.OFFER, level: 'Advanced' },
-        { name: 'UI/UX Design', type: SkillType.SEEK, level: 'Beginner' }
-      ]
+      bio: 'Product Manager. Expert in Agile and Scrum. Want to learn Figma.',
     },
     {
-      email: 'david@example.com',
       name: 'David Kim',
+      email: 'david@example.com',
       password: hashedPassword,
-      bio: 'Expertise in machine learning and visualization using Python.',
-      title: 'Data Scientist',
-      role: Role.TEACHER,
-      imageUrl: 'https://picsum.photos/seed/david/200/200',
-      skills: [
-        { name: 'Data Science', type: SkillType.OFFER, level: 'Expert' },
-        { name: 'Python', type: SkillType.OFFER, level: 'Expert' }
-      ]
+      bio: 'Full Stack Dev. Love TypeScript and AWS. Interested in Marketing.',
     }
   ];
 
-  for (const u of users) {
-    const { skills, ...userData } = u;
-    const user = await prisma.user.upsert({
-      where: { email: u.email },
-      update: userData,
-      create: userData,
-    });
+  const createdUsers = await Promise.all(
+    users.map(u => prisma.user.create({ data: u }))
+  );
 
-    for (const s of skills) {
-      const skillId = getSkillId(s.name);
-      if (skillId) {
-        await prisma.userSkill.upsert({
-          where: {
-            userId_skillId_type: {
-              userId: user.id,
-              skillId: skillId,
-              type: s.type
-            }
-          },
-          update: { level: s.level },
-          create: {
-            userId: user.id,
-            skillId: skillId,
-            type: s.type,
-            level: s.level
-          }
-        });
-      }
-    }
-  }
+  const skills = [
+    { name: 'UI/UX Design', category: 'Design' },
+    { name: 'React', category: 'Development' },
+    { name: 'Node.js', category: 'Development' },
+    { name: 'Python', category: 'Development' },
+    { name: 'Project Management', category: 'Business' },
+    { name: 'Digital Marketing', category: 'Business' },
+    { name: 'AWS', category: 'DevOps' },
+    { name: 'Figma', category: 'Design' }
+  ];
 
-  console.log('✅ Seeding complete!');
+  const createdSkills = await Promise.all(
+    skills.map(s => prisma.skill.create({ data: s }))
+  );
+
+  // Link skills to users
+  await prisma.userSkill.createMany({
+    data: [
+      { userId: createdUsers[0]!.id, skillId: createdSkills[0]!.id, type: 'OFFER' },
+      { userId: createdUsers[0]!.id, skillId: createdSkills[1]!.id, type: 'SEEK' },
+      { userId: createdUsers[1]!.id, skillId: createdSkills[3]!.id, type: 'OFFER' },
+      { userId: createdUsers[1]!.id, skillId: createdSkills[2]!.id, type: 'OFFER' },
+      { userId: createdUsers[2]!.id, skillId: createdSkills[4]!.id, type: 'OFFER' },
+      { userId: createdUsers[2]!.id, skillId: createdSkills[7]!.id, type: 'SEEK' },
+      { userId: createdUsers[3]!.id, skillId: createdSkills[6]!.id, type: 'OFFER' },
+      { userId: createdUsers[3]!.id, skillId: createdSkills[5]!.id, type: 'SEEK' },
+    ]
+  });
+
+  console.log('Seeding finished successfully!');
 }
 
 main()
