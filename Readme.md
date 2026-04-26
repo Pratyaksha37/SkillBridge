@@ -1,203 +1,93 @@
 # SkillBridge – Peer Skill Exchange Platform
 
 ## 📌 Overview
-
-SkillBridge is a web-based platform that connects learners and teachers within a community. Users can list skills they can teach and skills they want to learn, enabling peer-to-peer knowledge exchange.
-
-The goal is to simplify finding mentors, collaborators, or practice partners for various skills such as programming, languages, and arts.
+SkillBridge is a high-premium, web-based platform that connects learners and teachers within a community. It enables peer-to-peer knowledge exchange by allowing users to list skills they offer and skills they seek, with a built-in bidirectional matching algorithm.
 
 ---
 
 ## 🚀 Tech Stack
-
-* **Frontend:** React + TypeScript
-* **Backend:** Node.js + TypeScript (Express/NestJS)
-* **Database:** MongoDB / PostgreSQL
-* **Authentication:** JWT
-* **Version Control:** Git + GitHub
-
----
-
-## ✨ Features
-
-* User profiles with offered and desired skills
-* Skill-based search and matching
-* Peer connections and notifications
-* Messaging / session scheduling
-* Ratings and feedback system
+* **Frontend:** React + TypeScript + Tailwind CSS
+* **Backend:** Node.js + Express + TypeScript
+* **ORM:** Prisma (Schema-driven development)
+* **Database:** PostgreSQL (Neon.tech)
+* **Authentication:** JWT (JSON Web Tokens)
 
 ---
 
-## 🧩 Design Pattern Used
-
-### Observer Pattern
-
-The Observer pattern is used for implementing the notification system.
-
-#### 📌 Purpose
-
-To notify users automatically when:
-
-* A new match is found
-* A skill is added
-* A message is received
-
-#### 🏗 Structure
-
-* **Subject:** MatchService / SkillService
-* **Observers:** Users / NotificationService
-
-#### ⚙️ Example
-
-When a new skill is added, the system notifies all relevant users subscribed to that skill.
-
-#### ✅ Benefits
-
-* Loose coupling between components
-* Scalable notification system
-* Easy to extend (email, SMS, etc.)
+## ✨ Key Features
+* **Smart Matching:** A real-time algorithm that calculates match percentages between users based on skill overlap.
+* **Collaboration Hub:** Instant meeting link generation (Google Meet) and a comprehensive peer rating system.
+* **Connection Management:** Build and manage your personal learning network with "Connect" and "Remove" features.
+* **Advanced Explore:** Multi-filter search (by category or keyword) to find the perfect mentor.
+* **Reputation System:** Dynamic average ratings displayed on profiles and search cards.
 
 ---
 
-## 🧱 System Design
+## 🏗️ Architectural Design Patterns
 
-### Architecture
+### 1. Singleton Pattern
+All services and repositories are exported as singletons to ensure a single source of truth and efficient memory usage across the backend.
+- **Example:** `export const userService = new UserService();`
 
-The project follows a **three-tier architecture**:
+### 2. Repository Pattern
+We decouple database logic from business logic. The `userRepository` handles raw Prisma queries, while the `userService` handles the actual matching and dashboard logic.
 
-1. **Frontend (React)** – User interface
-2. **Backend (Node.js API)** – Business logic
-3. **Database** – Data storage
+### 3. Adapter Pattern
+Our Service layer acts as an adapter, transforming complex database relations into clean, ready-to-render objects (DTOs) for the frontend.
 
-### API Design
-
-RESTful APIs will be used:
-
-* `POST /users` – Create user
-* `GET /skills` – Fetch skills
-* `POST /matches` – Create match
-* `GET /sessions` – Fetch sessions
-
----
-
-## 🧠 OOP Design
-
-### Core Classes
-
-#### User
-
-* Manages user profile and skills
-
-#### Skill
-
-* Represents a specific skill
-
-#### Session
-
-* Represents a learning interaction between users
-
-### Relationships
-
-* User ↔ Skill → Many-to-Many
-* User ↔ Session → One-to-Many
-* Session ↔ Skill → Many-to-One
-
----
-
-## 📊 ER Diagram (Conceptual)
-
-### Entities
-
-* User
-* Skill
-* Session
-* Message
-* Rating
-
-### Relationships
-
-* Users can have multiple skills
-* Users participate in multiple sessions
-* Sessions include messages and ratings
-
----
-
-## 🔄 SDLC Approach
-
-The project follows an **Agile (Iterative) model**:
-
-1. Requirement Analysis
-2. System Design (OOP, ER diagrams, APIs)
-3. Implementation
-4. Testing (Unit + Integration)
-5. Deployment
-6. Maintenance
+### 4. Observer (Notification) Pattern
+The frontend uses an observer-like pattern via React's `useEffect` hooks, which "observe" state changes (like category selection) and trigger automatic data synchronization.
 
 ---
 
 ## 🧩 SOLID Principles Applied
 
-* **SRP:** Each class has a single responsibility
-* **OCP:** Matching logic can be extended without modification
-* **LSP:** Subclasses (Teacher/Learner) behave like User
-* **ISP:** Separate interfaces for different functionalities
-* **DIP:** High-level modules depend on abstractions
+*   **S (Single Responsibility):** Each service is dedicated to a single domain (Auth, Users, Connections, Ratings).
+*   **O (Open/Closed):** The filtering logic in `getMentors` is open to extension for new filters without modifying core query functions.
+*   **L (Liskov Substitution):** We use a custom `AuthRequest` that seamlessly extends the Express `Request` interface.
+*   **I (Interface Segregation):** Frontend components use lean, focused Prop interfaces to minimize unnecessary dependencies.
+*   **D (Dependency Inversion):** High-level services depend on Repository abstractions rather than direct DB calls.
 
 ---
 
-## 📁 Project Structure
+## 🧩 API Endpoints
 
-```
-/src        → Source code  
-/docs       → Documentation  
-/diagrams   → UML & ER diagrams  
-/db         → Database schema/config  
-```
+### 👤 User & Profile
+* `GET /api/users/dashboard` – Personalized dashboard with matching peers and connection history.
+* `GET /api/users/mentors` – Filterable list of all peer mentors.
+* `PATCH /api/users/profile` – Update user profile, bio, and availability.
 
----
+### 🤝 Connections
+* `POST /api/connections` – Establish a new connection.
+* `DELETE /api/connections/:receiverId` – Remove an existing connection.
 
-## 🔐 Security Considerations
-
-* JWT-based authentication
-* Input validation
-* Secure API endpoints
-
----
-
-## 📌 Future Enhancements
-
-* Real-time chat using WebSockets
-* Advanced matching algorithm
-* Mobile app version
-* Integration with email/SMS services
+### 🌟 Skills & Ratings
+* `POST /api/skills` – Add a new skill to your profile.
+* `DELETE /api/skills` – Remove a specific skill.
+* `POST /api/ratings` – Rate a peer's collaboration performance.
 
 ---
 
-## 👨‍💻 How to Run (Basic)
+## 👨‍💻 How to Run
 
+### Backend
 ```bash
-# Clone repo
-git clone <repo-url>
-
-# Install dependencies
+cd backend
 npm install
-
-# Run backend
+# Setup .env with DATABASE_URL and JWT_SECRET
+npx prisma generate
+npx prisma db push
 npm run dev
+```
 
-# Run frontend
-npm start
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 ---
 
 ## 📖 Conclusion
-
-SkillBridge demonstrates the application of:
-
-* Object-Oriented Programming
-* Design Patterns (Observer)
-* SOLID principles
-* System Design and Architecture
-
-It provides a practical solution for peer-to-peer skill exchange in a scalable and maintainable way.
+SkillBridge demonstrates how modern software engineering principles like **SOLID** and **Design Patterns** can be used to build a robust, maintainable, and premium-quality peer-to-peer exchange platform.
