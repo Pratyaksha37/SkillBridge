@@ -1,4 +1,4 @@
-import { Search, SlidersHorizontal, Calendar, Star, ArrowRight, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Star, ArrowRight, Loader2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConnectModal from './ConnectModal';
@@ -7,7 +7,7 @@ export default function Explore() {
   const navigate = useNavigate();
   const [mentors, setMentors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [_error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -197,16 +197,7 @@ export default function Explore() {
 }
 
 
-function FilterSelect({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <div className="relative min-w-[180px]">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">{icon}</span>
-      <select className="w-full pl-12 pr-10 py-4 bg-surface-container-lowest border-none rounded-2xl appearance-none font-semibold text-on-surface-variant cursor-pointer focus:ring-2 focus:ring-primary/20 outline-none">
-        <option>{label}</option>
-      </select>
-    </div>
-  );
-}
+
 
 interface MentorCardProps {
   name: string;
@@ -221,7 +212,7 @@ interface MentorCardProps {
   key?: React.Key;
 }
 
-function MentorCard({ name, role, rating, bio, tags, isNew, imageUrl, onConnect, isConnected }: MentorCardProps) {
+function MentorCard({ name, rating, bio, tags, isNew, imageUrl, onConnect, isConnected }: MentorCardProps) {
   return (
     <div
       className="group bg-surface-container-lowest rounded-[2rem] p-6 ambient-shadow flex flex-col h-full border border-transparent hover:border-primary/5 transition-all duration-300 hover:-translate-y-2 cursor-pointer"

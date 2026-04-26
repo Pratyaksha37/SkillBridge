@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Mail, Share2, Star, Plus } from 'lucide-react';
 
 interface ConnectModalProps {

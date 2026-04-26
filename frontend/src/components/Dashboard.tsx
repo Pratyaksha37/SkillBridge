@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Compass, Terminal, CircleDollarSign, Brush, Star, Handshake, Loader2, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Compass, Loader2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConnectModal from './ConnectModal';
 
@@ -248,39 +248,7 @@ export default function Dashboard() {
 }
 
 
-interface SkillCardProps {
-  title: string;
-  level: string;
-  students?: number;
-  tags: string[];
-  icon: React.ReactNode;
-  colorClass: string;
-}
 
-function SkillCard({ title, level, students, tags, icon, colorClass }: SkillCardProps) {
-  return (
-    <div
-      className="bg-surface-container-lowest p-6 rounded-xl ghost-border transition-transform duration-300 hover:scale-[1.02]"
-    >
-      <div className="flex items-center gap-4 mb-4">
-        <div className={`w-12 h-12 rounded-lg ${colorClass} flex items-center justify-center`}>
-          {icon}
-        </div>
-        <div>
-          <h3 className="font-bold text-on-surface">{title}</h3>
-          <p className="text-xs text-on-surface-variant">{level} {students ? `• ${students} Students` : ''}</p>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {tags.map(tag => (
-          <span key={tag} className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded-lg text-xs font-medium">
-            {tag}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 interface StatBoxProps {
   value: string;

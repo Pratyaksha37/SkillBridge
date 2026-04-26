@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { MapPin, Clock, Languages, Edit2, Handshake, Star, Share2, Mail, Plus, Loader2 } from 'lucide-react';
+import { MapPin, Clock, Languages, Edit2, Handshake, Star, Mail, Plus, Loader2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -95,7 +95,7 @@ export default function Profile() {
 
       if (!response.ok) throw new Error('Failed to add skill');
       
-      const result = await response.json();
+      await response.json();
       
       // Fetch updated profile data to show the new skill immediately
       const refreshResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/auth/me`, {

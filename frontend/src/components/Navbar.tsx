@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { LogOut, User as UserIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function Navbar() {

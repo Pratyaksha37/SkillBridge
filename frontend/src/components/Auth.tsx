@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { LogIn, UserPlus, Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,9 +20,6 @@ export default function Auth() {
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const body = isLogin ? { email, password } : { email, password, name };
-
-      // In a completely hooked up version, this uses the real backend URL
-      // For local testing on default ports:
       const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:4000') + endpoint;
 
       const response = await fetch(apiUrl, {
