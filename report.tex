@@ -1,0 +1,94 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{enumitem}
+
+\title{SkillBridge\\ \large Peer Skill Exchange Platform Project Report}
+\author{Project Documentation}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+SkillBridge is a high-premium, web-based platform that connects learners and teachers within a community. It enables peer-to-peer knowledge exchange by allowing users to list skills they offer and skills they seek, featuring a built-in bidirectional matching algorithm.
+\end{abstract}
+
+\section{Introduction}
+SkillBridge demonstrates how modern software engineering principles like SOLID and Design Patterns can be used to build a robust, maintainable, and premium-quality peer-to-peer exchange platform. This report details the technical foundations, key features, and architectural decisions underlying the platform.
+
+\section{Tech Stack}
+The application is built using a modern full-stack web development suite:
+\begin{itemize}
+    \item \textbf{Frontend:} React, TypeScript, and Tailwind CSS
+    \item \textbf{Backend:} Node.js, Express, and TypeScript
+    \item \textbf{ORM:} Prisma (Schema-driven development)
+    \item \textbf{Database:} PostgreSQL (Neon.tech)
+    \item \textbf{Authentication:} JWT (JSON Web Tokens)
+\end{itemize}
+
+\section{Key Features}
+The platform incorporates several sophisticated features to facilitate seamless learning and connection:
+\begin{itemize}
+    \item \textbf{Smart Matching:} A real-time algorithm calculates match percentages between users based on skill overlap.
+    \item \textbf{Collaboration Hub:} Instant meeting link generation (e.g., Google Meet) and a comprehensive peer rating system.
+    \item \textbf{Connection Management:} Users can build and manage their personal learning network using the "Connect" and "Remove" features.
+    \item \textbf{Advanced Explore:} A multi-filter search system (by category or keyword) enables finding the perfect mentor.
+    \item \textbf{Reputation System:} Dynamic average ratings are calculated and displayed on profiles and search cards.
+\end{itemize}
+
+\section{Architectural Design Patterns}
+The backend architecture relies on proven design patterns to ensure maintainability and scalability:
+
+\subsection{Singleton Pattern}
+All services and repositories are exported as singletons to ensure a single source of truth and efficient memory usage across the backend (e.g., \texttt{export const userService = new UserService();}).
+
+\subsection{Repository Pattern}
+Database logic is explicitly decoupled from business logic. A repository (e.g., \texttt{userRepository}) handles raw database queries via Prisma, while services handle application logic such as matching and dashboard aggregation.
+
+\subsection{Adapter Pattern}
+The Service layer acts as an adapter, transforming complex database relations and schemas into clean, ready-to-render Data Transfer Objects (DTOs) for the frontend.
+
+\subsection{Observer (Notification) Pattern}
+On the frontend, an observer-like pattern is implemented using React's \texttt{useEffect} hooks. These observe state changes (such as category selection) and trigger automatic data synchronization and UI updates.
+
+\section{SOLID Principles Applied}
+\begin{itemize}
+    \item \textbf{Single Responsibility Principle (SRP):} Each service is dedicated to a single domain (e.g., Auth, Users, Connections, Ratings).
+    \item \textbf{Open/Closed Principle (OCP):} The filtering logic is open to extension for new filters without modifying core query functions.
+    \item \textbf{Liskov Substitution Principle (LSP):} A custom \texttt{AuthRequest} seamlessly extends the Express \texttt{Request} interface.
+    \item \textbf{Interface Segregation Principle (ISP):} Frontend components utilize lean, focused Prop interfaces to minimize unnecessary dependencies.
+    \item \textbf{Dependency Inversion Principle (DIP):} High-level services depend on Repository abstractions rather than direct database calls.
+\end{itemize}
+
+\section{API Endpoints}
+
+\subsection{User \& Profile}
+\begin{itemize}
+    \item \texttt{GET /api/users/dashboard} – Personalized dashboard with matching peers and connection history.
+    \item \texttt{GET /api/users/mentors} – Filterable list of all peer mentors.
+    \item \texttt{PATCH /api/users/profile} – Update user profile, bio, and availability.
+\end{itemize}
+
+\subsection{Connections}
+\begin{itemize}
+    \item \texttt{POST /api/connections} – Establish a new connection.
+    \item \texttt{DELETE /api/connections/:receiverId} – Remove an existing connection.
+\end{itemize}
+
+\subsection{Skills \& Ratings}
+\begin{itemize}
+    \item \texttt{POST /api/skills} – Add a new skill to a profile.
+    \item \texttt{DELETE /api/skills} – Remove a specific skill.
+    \item \texttt{POST /api/ratings} – Rate a peer's collaboration performance.
+\end{itemize}
+
+\section{Conclusion}
+SkillBridge successfully implements a highly structured, scalable architecture that provides an intuitive interface for peer-to-peer knowledge exchange. By strictly adhering to SOLID principles and industry-standard design patterns, the codebase ensures long-term maintainability and performance.
+
+\end{document}
